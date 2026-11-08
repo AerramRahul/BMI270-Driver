@@ -19,12 +19,11 @@ bool initializeBMI270(uint8_t deviceadd);
 // To write to multiple registers.
 bool writeRegisters(uint8_t deviceadd, uint8_t regadd, const uint8_t *data, uint8_t length);
 
-// Function used in the initialization of the BMI270, converts and passes the 12 bit register address to set the internal memory pointer for the passing of the config array.
+/* Function used in the initialization of the BMI270, converts and passes the 12 bit register address to set the
+   internal memory pointer for the passing of the config array. */
 bool setConfigAddress(uint8_t deviceadd, uint16_t address);
 
-bool configureAccelerometer(uint8_t deviceadd, AcelODR odr, AcelRANGE range, AcelBANDWITH bandwith, performanceFilter perfFilter);
-
-enum class AcelODR
+enum class AccelODR
 {
     ODR_25,
     ODR_50,
@@ -35,15 +34,15 @@ enum class AcelODR
     ODR_1600
 };
 
-enum class AcelRANGE
+enum class AccelRANGE
 {
   RANGE_2G,
   RANGE_4G,
-  RANGE_8g,
+  RANGE_8G,
   RANGE_16G
 };
 
-enum class AcelBANDWITH
+enum class AccelBandwidth
 {
   OSR2,
   OSR4,
@@ -55,15 +54,74 @@ enum class AcelBANDWITH
   RES_AVG128
 };
 
-enum class performanceFilter
+enum class AccelPerformanceFilter
 {
-  POWER_OPT = 0,
-  PERF_OPT = 1
+  POWER_OPTIMIZED = 0,
+  PERF_OPTIMIZED = 1
 };
 
-bool getRangeBits(AcelRANGE range, uint8_t &bits);
+bool getAccelRangeBits(AccelRANGE range, uint8_t &bits);
 
-bool getODRBits(AcelODR odr, uint8_t &bits);
+bool getAccelODRBits(AccelODR odr, uint8_t &bits);
 
-bool getBandwithBits(AcelBANDWITH bandwith, uint8_t &bits);
+bool getAccelBandwidthBits(AccelBandwidth bandwidth, uint8_t &bits);
+
+bool configureAccelerometer(uint8_t deviceadd, AccelODR odr, AccelRANGE range, AccelBandwidth bandwidth,
+                            AccelPerformanceFilter perfFilter);
+
+enum class GyroODR
+{
+  ODR_25,
+  ODR_50,
+  ODR_100,
+  ODR_200,
+  ODR_400,
+  ODR_800,
+  ODR_1600,
+  ODR_3200
+};
+
+enum class GyroBandwidth
+{
+  OSR4,
+  OSR2,
+  NORMAL
+};
+
+enum class GyroNoisePerformance
+{
+  POWER_OPTIMIZED = 0,
+  PERF_OPTIMIZED = 1
+};
+
+enum class GyroFilterPerformance
+{
+  POWER_OPTIMIZED = 0,
+  PERF_OPTIMIZED = 1
+};
+
+enum class GyroRange
+{
+  RANGE_2000_DPS,
+  RANGE_1000_DPS,
+  RANGE_500_DPS,
+  RANGE_250_DPS,
+  RANGE_125_DPS
+};
+
+enum class GyroOISRange
+{
+  RANGE_250_DPS,
+  RANGE_2000_DPS
+};
+
+bool getGyroRangeBits(GyroRange range, uint8_t &bits);
+
+bool getGyroBandwidthBits(GyroBandwidth bandwidth, uint8_t &bits);
+
+bool getGyroOISRangeBits(GyroOISRange oisRange, uint8_t &bits);
+
+bool getGyroODRBits(GyroODR odr, uint8_t &bits);
+
+bool configureGyroscope(uint8_t deviceadd, GyroODR odr, GyroBandwidth bandwidth, GyroFilterPerformance filterPerf, GyroNoisePerformance noisePerf, GyroOISRange oisRange, GyroRange range);
 #endif

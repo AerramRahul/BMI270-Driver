@@ -17,9 +17,9 @@ bool readRegister(uint8_t deviceadd, uint8_t regadd, uint8_t &data)
   {
     return false; // Communication failed.
   }
-  uint8_t bytesRecieved = Wire.requestFrom(deviceadd, 1); // Returns number of bytes that have been put in the memory buffer.
+  uint8_t bytesReceived = Wire.requestFrom(deviceadd, 1); // Returns number of bytes in the memory buffer.
 
-  if(Wire.available() >= 1 && bytesRecieved == 1)
+  if(Wire.available() >= 1 && bytesReceived == 1)
   {
     data = Wire.read();
     return true;
@@ -60,9 +60,9 @@ bool readRegisters(uint8_t deviceadd, uint8_t regadd, uint8_t *data, uint8_t len
     return false;
   }
 
-  uint8_t bytesRecieved = Wire.requestFrom(deviceadd, length);
+  uint8_t bytesReceived = Wire.requestFrom(deviceadd, length);
 
-  if(bytesRecieved == length && Wire.available() >= length)
+  if(bytesReceived == length && Wire.available() >= length)
   {
     for(int i = 0; i<length; i++)
     {
@@ -95,16 +95,19 @@ bool writeRegisters(uint8_t deviceadd, uint8_t regadd, const uint8_t *data, uint
 
 bool setConfigAddress(uint8_t deviceadd, uint16_t address)
 {
-  uint8_t lowbyte = address & 0x0F; // Using a bit mask, 0x0F is 0000 0000 1111, 1's retain the bit and 0's erase the bits, low byte is 4 bits
-  uint8_t highbyte = (address >> 4) & 0xFF; // Using a bit mask, 0x0F is 0000 1111 1111, we first push off the four bits we read by shifting
-                                            // 1's retain the bit and 0's erase the bits, high byte is 8 bits.
+  uint8_t lowNibble = address & 0x0F; /* Using a bit mask, 0x0F is 0000 0000 1111, 1's retain the bit and 0's erase
+                                         the bits, low byte is 4 bits */
 
-  if(!writeRegister(deviceadd, 0x5B, lowbyte))
+  uint8_t highByte = (address >> 4) & 0xFF; /* Using a bit mask, 0x0F is 0000 1111 1111, we first push off the
+                                                 four bits we read by shifting 1's retain the bit and 0's erase the
+                                                 bits, high byte is 8 bits. */
+
+  if(!writeRegister(deviceadd, 0x5B, lowNibble))
   {
     return false;
   }
 
-  if(!writeRegister(deviceadd, 0x5C, highbyte))
+  if(!writeRegister(deviceadd, 0x5C, highByte))
   {
     return false;
   }
@@ -141,7 +144,7 @@ bool initializeBMI270(uint8_t deviceadd)
   // Burst Writing the config data.
   for(int i = 0; i < size; i+=32)
   { 
-    uint16_t configAddress = i / 2; // This is beacuse the BMI 270 needs the data written in a 16 bit format.
+    uint16_t configAddress = i / 2; // This is because the BMI 270 needs the data written in a 16 bit format.
 
     uint16_t chunkRemaining = size - i;
     uint8_t length = (chunkRemaining > 32) ? 32: chunkRemaining; 
@@ -165,27 +168,28 @@ bool initializeBMI270(uint8_t deviceadd)
   if(!readRegister(deviceadd, 0x21, status))
     return false;
 
-  return ((status & 0x0F) == 0x01); // We did status & 0x0F because the BMI270's INTERNAL_STATUS register contains a message field in its lower four bits.
-                                    // We're interested in whether that field reports successful initialization (0x01).
+  return ((status & 0x0F) == 0x01); /* We did status & 0x0F because the BMI270's INTERNAL_STATUS register contains a
+                                      message field in its lower four bits. We're interested in whether that field
+                                      reports successful initialization (0x01). */
 }
 
-bool getRangeBits(AcelRANGE range, uint8_t &bits)
+bool getAccelRangeBits(AccelRANGE range, uint8_t &bits)
 {
   switch(range)
   {
-    case AcelRANGE::RANGE_2G: 
+    case AccelRANGE::RANGE_2G:
       bits = 0x00;
       break;
 
-    case AcelRANGE::RANGE_4G: 
+    case AccelRANGE::RANGE_4G: 
       bits = 0x01;
     break;
 
-    case AcelRANGE::RANGE_8G: 
+    case AccelRANGE::RANGE_8G: 
       bits = 0x02;
     break;
 
-    case AcelRANGE::RANGE_16G: 
+    case AccelRANGE::RANGE_16G: 
       bits = 0x03;
     break;
 
@@ -196,34 +200,34 @@ bool getRangeBits(AcelRANGE range, uint8_t &bits)
 
 
 
-bool getODRBits(AcelODR odr, uint8_t &bits)
+bool getAccelODRBits(AccelODR odr, uint8_t &bits)
 {
   switch(odr)
   {
-    case AcelODR::ODR_25:
+    case AccelODR::ODR_25:
       bits = 0x06;
     break;
 
-    case AcelODR::ODR_50:
+    case AccelODR::ODR_50:
       bits = 0x07;
     break;
 
-    case AcelODR::ODR_100:
+    case AccelODR::ODR_100:
       bits = 0x08;
     break;
 
-    case AcelODR::ODR_200:
+    case AccelODR::ODR_200:
       bits = 0x09;
     break;
-    case AcelODR::ODR_400:
+    case AccelODR::ODR_400:
       bits = 0x0a;
     break;
 
-    case AcelODR::ODR_800:
+    case AccelODR::ODR_800:
       bits = 0x0b;
     break;
 
-    case AcelODR::ODR_1600:
+    case AccelODR::ODR_1600:
       bits = 0x0c;
     break;
 
@@ -234,39 +238,39 @@ bool getODRBits(AcelODR odr, uint8_t &bits)
 
 
 
-bool getBandwithBits(AcelBANDWITH bandwith, uint8_t &bits)
+bool getAccelBandwidthBits(AccelBandwidth bandwidth, uint8_t &bits)
 {
-  switch(bandwith)
+  switch(bandwidth)
   {
-    case AcelBANDWITH::OSR4:
+    case AccelBandwidth::OSR4:
       bits = 0x00;
     break;
 
-    case AcelBANDWITH::OSR2:
+    case AccelBandwidth::OSR2:
       bits = 0x01;
     break;
     
-    case AcelBANDWITH::NORMAL:
+    case AccelBandwidth::NORMAL:
       bits = 0x02;
     break;
     
-    case AcelBANDWITH::CIC_MODE:
+    case AccelBandwidth::CIC_MODE:
       bits = 0x03;
     break;
     
-    case AcelBANDWITH::RES_AVG16:
+    case AccelBandwidth::RES_AVG16:
       bits = 0x04;
     break;
     
-    case AcelBANDWITH::RES_AVG32:
+    case AccelBandwidth::RES_AVG32:
       bits = 0x05;
     break;
     
-    case AcelBANDWITH::RES_AVG64:
+    case AccelBandwidth::RES_AVG64:
       bits = 0x06;
     break;
     
-    case AcelBANDWITH::RES_AVG128:
+    case AccelBandwidth::RES_AVG128:
       bits = 0x07;
     break;
     
@@ -277,9 +281,210 @@ bool getBandwithBits(AcelBANDWITH bandwith, uint8_t &bits)
 
 
 
-bool configureAccelerometer(uint8_t deviceadd, AcelODR odr, AcelRANGE range, AcelBANDWITH bandwith, performanceFilter perfFilter)
+bool configureAccelerometer(uint8_t deviceadd, AccelODR odr, AccelRANGE range, AccelBandwidth bandwidth,
+                            AccelPerformanceFilter perfFilter)
 {
-  
-  
+  constexpr uint8_t REG_ACC_CONF = 0x40;
+  constexpr uint8_t REG_ACC_RANGE = 0x41;
 
+  uint8_t range_bits = 0; 
+  uint8_t odr_bits = 0;
+  uint8_t bandwidth_bits = 0;
+  uint8_t perfFilter_bits = 0;
+
+  if(!getAccelRangeBits(range, range_bits))
+  {
+    return false;
+  }
+
+  if(!getAccelODRBits(odr, odr_bits))
+  {
+    return false;
+  }
+
+  if(!getAccelBandwidthBits(bandwidth, bandwidth_bits))
+  {
+    return false;
+  }
+
+  perfFilter_bits = static_cast <uint8_t> (perfFilter);
+
+  uint8_t accConfigValue =  (odr_bits) | (bandwidth_bits << 4) | (perfFilter_bits << 7);
+
+  if(!writeRegister(deviceadd, REG_ACC_CONF, accConfigValue))
+  {
+    return false;
+  }
+
+  if(!writeRegister(deviceadd, REG_ACC_RANGE, range_bits))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+
+bool getGyroRangeBits(GyroRange range, uint8_t &bits)
+{
+    switch(range)
+    {
+      case GyroRange::RANGE_125_DPS:
+        bits = 0x04;
+        break;
+
+      case GyroRange::RANGE_250_DPS:
+        bits = 0x03;
+        break;
+
+      case GyroRange::RANGE_500_DPS:
+        bits = 0x02;
+        break;
+
+      case GyroRange::RANGE_1000_DPS:
+        bits = 0x01;
+        break;
+
+      case GyroRange::RANGE_2000_DPS:
+        bits = 0x00;
+        break;
+
+      default: return false;
+    }
+  return true;
+}
+
+bool getGyroOISRangeBits(GyroOISRange oisRange, uint8_t &bits)
+{
+  switch (oisRange)
+  {
+    case GyroOISRange::RANGE_250_DPS:
+      bits = 0x00;
+      break;
+
+    case GyroOISRange::RANGE_2000_DPS:
+      bits = 0x01;
+      break;
+
+    default: return false;
+  }
+  return true;
+}
+
+
+bool getGyroODRBits(GyroODR odr, uint8_t &bits)
+{
+  switch (odr)
+  {
+    case GyroODR::ODR_25:
+      bits = 0x06;
+      break;
+
+    case GyroODR::ODR_50:
+      bits = 0x07;
+      break;
+
+    case GyroODR::ODR_100:
+      bits = 0x08;
+      break;
+
+    case GyroODR::ODR_200:
+      bits = 0x09;
+      break;
+
+    case GyroODR::ODR_400:
+      bits = 0x0a;
+      break;
+
+    case GyroODR::ODR_800:
+      bits = 0x0b;
+      break;
+
+    case GyroODR::ODR_1600:
+      bits = 0x0c;
+      break;
+
+    case GyroODR::ODR_3200:
+      bits = 0x0d;
+      break;
+
+    default: return false;
+  }
+
+  return true;
+}
+
+
+bool getGyroBandwidthBits(GyroBandwidth bandwidth, uint8_t &bits)
+{
+  switch (bandwidth)
+  {
+    case GyroBandwidth::OSR2:
+      bits = 0x01;
+      break;
+
+    case GyroBandwidth::OSR4:
+      bits = 0x00;
+      break;
+
+    case GyroBandwidth::NORMAL:
+      bits = 0x02;
+      break;
+
+    default: return false;
+  }
+
+  return true;
+}
+
+bool configureGyroscope(uint8_t deviceadd, GyroODR odr, GyroBandwidth bandwidth, GyroFilterPerformance filterPerf, GyroNoisePerformance noisePerf, GyroOISRange oisRange, GyroRange range)
+{
+  constexpr uint8_t REG_GYR_CONF = 0x42;
+  constexpr uint8_t REG_GYR_RANGE = 0x43;
+
+  uint8_t odr_bits = 0;
+  uint8_t bandwidth_bits = 0;
+  uint8_t oisRange_bits = 0;
+  uint8_t range_bits = 0;
+  uint8_t noisePerf_bits = 0;
+  uint8_t filterPerf_bits = 0;
+
+  if (!getGyroODRBits(odr, odr_bits))
+  {
+    return false;
+  }
+
+  if (!getGyroBandwidthBits(bandwidth, bandwidth_bits))
+  {
+    return false;
+  }
+
+  if (!getGyroRangeBits(range, range_bits))
+  {
+    return false;
+  }
+
+  if (!getGyroOISRangeBits(oisRange, oisRange_bits))
+  {
+    return false;
+  }
+
+  noisePerf_bits = static_cast<uint8_t>(noisePerf);
+  filterPerf_bits = static_cast<uint8_t>(filterPerf);
+
+  uint8_t gyroConfigValue = (odr_bits) | (bandwidth_bits << 4) | (noisePerf_bits << 6) | (filterPerf_bits << 7);
+
+  uint8_t gyroRangeConfigValue = (range_bits) | (oisRange_bits << 3);
+
+  if (!writeRegister(deviceadd, REG_GYR_CONF, gyroConfigValue))
+  {
+    return false;
+  }
+
+  if (!writeRegister(deviceadd, REG_GYR_RANGE, gyroRangeConfigValue))
+  {
+    return false;
+  }
+
+  return true;
 }
