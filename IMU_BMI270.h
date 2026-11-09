@@ -124,4 +124,22 @@ bool getGyroOISRangeBits(GyroOISRange oisRange, uint8_t &bits);
 bool getGyroODRBits(GyroODR odr, uint8_t &bits);
 
 bool configureGyroscope(uint8_t deviceadd, GyroODR odr, GyroBandwidth bandwidth, GyroFilterPerformance filterPerf, GyroNoisePerformance noisePerf, GyroOISRange oisRange, GyroRange range);
+
+enum class SensorType
+{
+  ACCELEROMETER,
+  GYROSCOPE
+};
+
+enum class SensorPowerState
+{
+  ENABLE,
+  DISABLE
+};
+
+bool setSensorPowerState(uint8_t deviceAddr, SensorPowerState powerState, SensorType type);
+
+bool readAccelerometerData(uint8_t deviceAddr, int16_t &xData, int16_t &yData, int16_t &zData)
+
+bool readGyroscopeData(uint8_t deviceAddr, int16_t &xData, int16_t &yData, int16_t &zData)
 #endif

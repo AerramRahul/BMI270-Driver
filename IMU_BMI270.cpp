@@ -488,3 +488,91 @@ bool configureGyroscope(uint8_t deviceadd, GyroODR odr, GyroBandwidth bandwidth,
 
   return true;
 }
+
+bool setSensorPowerState(uint8_t deviceAddr, SensorPowerState powerState, SensorType type)
+{
+  constexpr uint8_t REG_PWR_CTRL = 0x7D;
+
+  uint8_t currentPowerState = 0;
+
+  if (!readRegister(deviceAddr, REG_PWR_CTRL, currentPowerState))
+  {
+    return false;
+  }
+
+  uint8_t modifiedPowerState = 0;
+  uint8_t mask = 0;
+  uint8_t bitPosition = 0;
+
+  switch (type)
+  {
+    case SensorType::ACCELEROMETER:
+      bitPosition = 2;
+      break;
+    case SensorType::GYROSCOPE:
+      bitPosition = 1;
+      break;
+
+    default: return false;
+  }
+
+  switch (powerState)
+  {
+    case SensorPowerState::DISABLE:
+      mask = static_cast<uint8_t>(~(1U << bitPosition));
+      modifiedPowerState = (currentPowerState) & mask;
+      break;
+
+    case SensorPowerState::ENABLE:
+      mask = static_cast<uint8_t>((1U << bitPosition));
+      modifiedPowerState = (currentPowerState) | mask;
+      break;
+
+    default: return false;
+  }
+
+  if (!writeRegister(deviceAddr, REG_PWR_CTRL, modifiedPowerState))
+  {
+    return false;
+  }
+
+  return true;
+}
+
+
+bool readAccelerometerData(uint8_t deviceAddr, int16_t &xData, int16_t &yData, int16_t &zData)
+{
+  constexpr uint8_t REG_ACC_DATA_START = 0x0C;
+  uint8_t buffer[6];
+
+  if (!readRegisters(deviceAddr, REG_ACC_DATA_START, buffer, 6))
+  {
+    return false;
+  }
+
+  xData = static_cast<int16_t>((buffer[1] << 8) | buffer[0]);
+  yData = static_cast<int16_t>((buffer[3] << 8) | buffer[2]);
+  zData = static_cast<int16_t>((buffer[5] << 8) | buffer[4]);
+
+  return true;
+
+}
+
+bool readGyroscopeData(uint8_t deviceAddr, int16_t &xData, int16_t &yData, int16_t &zData)
+{
+  constexpr uint8_t REG_GYR_DATA_START = 0x12;
+  uint8_t buffer[6];
+
+  if (!readRegisters(deviceAddr, REG_GYR_DATA_START, buffer, 6))
+  {
+    return false;
+  }
+
+  xData = static_cast<int16_t>((buffer[1] << 8) | buffer[0]);
+  yData = static_cast<int16_t>((buffer[3] << 8) | buffer[2]);
+  zData = static_cast<int16_t>((buffer[5] << 8) | buffer[4]);
+
+  return true;
+
+}
+
