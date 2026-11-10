@@ -4,12 +4,12 @@
 #include "BMI270_config.h"
 
 
-bool readRegister(uint8_t deviceadd, uint8_t regadd, uint8_t &data)
+bool readRegister(uint8_t deviceAddr, uint8_t regAddr, uint8_t &data)
 {
-  Wire.beginTransmission(deviceadd);
+  Wire.beginTransmission(deviceAddr);
 
   // Setting the internal memory pointer.
-  Wire.write(regadd);
+  Wire.write(regAddr);
 
   // Repeated Start.
   uint8_t error = Wire.endTransmission(false);
@@ -17,7 +17,7 @@ bool readRegister(uint8_t deviceadd, uint8_t regadd, uint8_t &data)
   {
     return false; // Communication failed.
   }
-  uint8_t bytesReceived = Wire.requestFrom(deviceadd, 1); // Returns number of bytes in the memory buffer.
+  uint8_t bytesReceived = Wire.requestFrom(deviceAddr, 1); // Returns number of bytes in the memory buffer.
 
   if(Wire.available() >= 1 && bytesReceived == 1)
   {
@@ -31,11 +31,11 @@ bool readRegister(uint8_t deviceadd, uint8_t regadd, uint8_t &data)
 
 
 
-bool writeRegister(uint8_t deviceadd, uint8_t regadd, uint8_t data)
+bool writeRegister(uint8_t deviceAddr, uint8_t regAddr, uint8_t data)
 {
-  Wire.beginTransmission(deviceadd);
+  Wire.beginTransmission(deviceAddr);
 
-  Wire.write(regadd);
+  Wire.write(regAddr);
 
   Wire.write(data);
 
@@ -46,12 +46,12 @@ bool writeRegister(uint8_t deviceadd, uint8_t regadd, uint8_t data)
 
 
 
-bool readRegisters(uint8_t deviceadd, uint8_t regadd, uint8_t *data, uint8_t length)
+bool readRegisters(uint8_t deviceAddr, uint8_t regAddr, uint8_t *data, uint8_t length)
 {
 
-  Wire.beginTransmission(deviceadd);
+  Wire.beginTransmission(deviceAddr);
 
-  Wire.write(regadd); // Setting internal memory pointer.
+  Wire.write(regAddr); // Setting internal memory pointer.
 
   uint8_t error = Wire.endTransmission(false); // Repeated Start
 
@@ -60,7 +60,7 @@ bool readRegisters(uint8_t deviceadd, uint8_t regadd, uint8_t *data, uint8_t len
     return false;
   }
 
-  uint8_t bytesReceived = Wire.requestFrom(deviceadd, length);
+  uint8_t bytesReceived = Wire.requestFrom(deviceAddr, length);
 
   if(bytesReceived == length && Wire.available() >= length)
   {
@@ -77,12 +77,12 @@ bool readRegisters(uint8_t deviceadd, uint8_t regadd, uint8_t *data, uint8_t len
 
 
 
-bool writeRegisters(uint8_t deviceadd, uint8_t regadd, const uint8_t *data, uint8_t length)
+bool writeRegisters(uint8_t deviceAddr, uint8_t regAddr, const uint8_t *data, uint8_t length)
 {
 
-  Wire.beginTransmission(deviceadd);
+  Wire.beginTransmission(deviceAddr);
 
-  Wire.write(regadd);
+  Wire.write(regAddr);
 
   size_t bytesWritten = Wire.write(data, length);
 
@@ -93,7 +93,7 @@ bool writeRegisters(uint8_t deviceadd, uint8_t regadd, const uint8_t *data, uint
 
 
 
-bool setConfigAddress(uint8_t deviceadd, uint16_t address)
+bool setConfigAddress(uint8_t deviceAddr, uint16_t address)
 {
   uint8_t lowNibble = address & 0x0F; /* Using a bit mask, 0x0F is 0000 0000 1111, 1's retain the bit and 0's erase
                                          the bits, low byte is 4 bits */
@@ -102,12 +102,12 @@ bool setConfigAddress(uint8_t deviceadd, uint16_t address)
                                                  four bits we read by shifting 1's retain the bit and 0's erase the
                                                  bits, high byte is 8 bits. */
 
-  if(!writeRegister(deviceadd, 0x5B, lowNibble))
+  if(!writeRegister(deviceAddr, 0x5B, lowNibble))
   {
     return false;
   }
 
-  if(!writeRegister(deviceadd, 0x5C, highByte))
+  if(!writeRegister(deviceAddr, 0x5C, highByte))
   {
     return false;
   }
@@ -118,25 +118,25 @@ bool setConfigAddress(uint8_t deviceadd, uint16_t address)
 
 
 
-bool initializeBMI270(uint8_t deviceadd)
+bool initializeBMI270(uint8_t deviceAddr)
 {
   uint8_t chipID;
 
-  if(!readRegister(deviceadd, 0x00, chipID))
+  if(!readRegister(deviceAddr, 0x00, chipID))
     return false;
 
   if(chipID != 0x24)
     return false;
 
   // Writing to disable PWR_CONF.adv_power_save
-  if(!writeRegister(deviceadd, 0x7C, 0x00))
+  if(!writeRegister(deviceAddr, 0x7C, 0x00))
     return false;
 
   // Waiting for 450 microseconds;
   delayMicroseconds(450);
 
   // Preparing config load INIT_CTRL = 0x00
-  if(!writeRegister(deviceadd, 0x59, 0x00))
+  if(!writeRegister(deviceAddr, 0x59, 0x00))
     return false;
 
   const uint16_t size = sizeof(bmi270_config_file);
@@ -149,23 +149,23 @@ bool initializeBMI270(uint8_t deviceadd)
     uint16_t chunkRemaining = size - i;
     uint8_t length = (chunkRemaining > 32) ? 32: chunkRemaining; 
     
-    if(!setConfigAddress(deviceadd, configAddress))
+    if(!setConfigAddress(deviceAddr, configAddress))
       return false;
 
-    if(!writeRegisters(deviceadd, 0x5E, &bmi270_config_file[i], length))
+    if(!writeRegisters(deviceAddr, 0x5E, &bmi270_config_file[i], length))
       return false;
 
   }
 
   // Final write
-  if(!writeRegister(deviceadd, 0x59, 0x01))
+  if(!writeRegister(deviceAddr, 0x59, 0x01))
     return false;
 
   // Waiting for 20 ms
   delay(20);
 
   uint8_t status;
-  if(!readRegister(deviceadd, 0x21, status))
+  if(!readRegister(deviceAddr, 0x21, status))
     return false;
 
   return ((status & 0x0F) == 0x01); /* We did status & 0x0F because the BMI270's INTERNAL_STATUS register contains a
@@ -281,7 +281,7 @@ bool getAccelBandwidthBits(AccelBandwidth bandwidth, uint8_t &bits)
 
 
 
-bool configureAccelerometer(uint8_t deviceadd, AccelODR odr, AccelRANGE range, AccelBandwidth bandwidth,
+bool configureAccelerometer(uint8_t deviceAddr, AccelODR odr, AccelRANGE range, AccelBandwidth bandwidth,
                             AccelPerformanceFilter perfFilter)
 {
   constexpr uint8_t REG_ACC_CONF = 0x40;
@@ -311,12 +311,12 @@ bool configureAccelerometer(uint8_t deviceadd, AccelODR odr, AccelRANGE range, A
 
   uint8_t accConfigValue =  (odr_bits) | (bandwidth_bits << 4) | (perfFilter_bits << 7);
 
-  if(!writeRegister(deviceadd, REG_ACC_CONF, accConfigValue))
+  if(!writeRegister(deviceAddr, REG_ACC_CONF, accConfigValue))
   {
     return false;
   }
 
-  if(!writeRegister(deviceadd, REG_ACC_RANGE, range_bits))
+  if(!writeRegister(deviceAddr, REG_ACC_RANGE, range_bits))
   {
     return false;
   }
@@ -437,7 +437,7 @@ bool getGyroBandwidthBits(GyroBandwidth bandwidth, uint8_t &bits)
   return true;
 }
 
-bool configureGyroscope(uint8_t deviceadd, GyroODR odr, GyroBandwidth bandwidth, GyroFilterPerformance filterPerf, GyroNoisePerformance noisePerf, GyroOISRange oisRange, GyroRange range)
+bool configureGyroscope(uint8_t deviceAddr, GyroODR odr, GyroBandwidth bandwidth, GyroFilterPerformance filterPerf, GyroNoisePerformance noisePerf, GyroOISRange oisRange, GyroRange range)
 {
   constexpr uint8_t REG_GYR_CONF = 0x42;
   constexpr uint8_t REG_GYR_RANGE = 0x43;
@@ -476,12 +476,12 @@ bool configureGyroscope(uint8_t deviceadd, GyroODR odr, GyroBandwidth bandwidth,
 
   uint8_t gyroRangeConfigValue = (range_bits) | (oisRange_bits << 3);
 
-  if (!writeRegister(deviceadd, REG_GYR_CONF, gyroConfigValue))
+  if (!writeRegister(deviceAddr, REG_GYR_CONF, gyroConfigValue))
   {
     return false;
   }
 
-  if (!writeRegister(deviceadd, REG_GYR_RANGE, gyroRangeConfigValue))
+  if (!writeRegister(deviceAddr, REG_GYR_RANGE, gyroRangeConfigValue))
   {
     return false;
   }
@@ -576,3 +576,67 @@ bool readGyroscopeData(uint8_t deviceAddr, int16_t &xData, int16_t &yData, int16
 
 }
 
+float getAccSensitivity(AccelRANGE range)
+{
+  switch (range)
+  {
+    case AccelRANGE::RANGE_2G: return 16384.0f;
+    case AccelRANGE::RANGE_4G: return 8192.0f;
+    case AccelRANGE::RANGE_8G: return 4096.0f;
+    case AccelRANGE::RANGE_16G: return 2048.0f;
+    default: return 0.0f;
+  }
+}
+
+
+float getGyroSensitivity(GyroRange range)
+{
+  switch (range)
+  {
+    case GyroRange::RANGE_125_DPS:: return 262.144f;
+    case GyroRange::RANGE_250_DPS: return 131.072f;
+    case GyroRange::RANGE_500_DPS: return 65.536;
+    case GyroRange::RANGE_1000_DPS: return 32.768f;
+    case GyroRange::RANGE_2000_DPS: return 16.384f;
+    default: return 0.0f;
+  }
+}
+
+bool scaleAccelerometerData(
+  int16_t &scaledX, int16_t &scaledY, int16_t &scaledZ,
+  int16_t rawX, int16_t rawY, int16_t rawZ, AccelRANGE range
+  )
+{
+  float sensitivity = getAccSensitivity(range);
+
+  if (sensitivity == 0.0f)
+  {
+    return false;
+  }
+
+  scaledX = rawX/sensitivity;
+  scaledY = rawY/sensitivity;
+  scaledZ = rawZ/sensitivity;
+
+  return true;
+}
+
+
+bool scaleGyroscopeData(
+  int16_t &scaledX, int16_t &scaledY, int16_t &scaledZ,
+  int16_t rawX, int16_t rawY, int16_t rawZ, GyroRange range
+  )
+{
+  float sensitivity = getGyroSensitivity(range);
+
+  if (sensitivity == 0.0f)
+  {
+    return false;
+  }
+
+  scaledX = rawX/sensitivity;
+  scaledY = rawY/sensitivity;
+  scaledZ = rawZ/sensitivity;
+
+  return true;
+}
