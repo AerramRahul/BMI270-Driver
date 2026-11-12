@@ -95,12 +95,9 @@ bool writeRegisters(uint8_t deviceAddr, uint8_t regAddr, const uint8_t *data, ui
 
 bool setConfigAddress(uint8_t deviceAddr, uint16_t address)
 {
-  uint8_t lowNibble = address & 0x0F; /* Using a bit mask, 0x0F is 0000 0000 1111, 1's retain the bit and 0's erase
-                                         the bits, low byte is 4 bits */
+  uint8_t lowNibble = address & 0x0F; // Extract the right most 4 bits.
 
-  uint8_t highByte = (address >> 4) & 0xFF; /* Using a bit mask, 0x0F is 0000 1111 1111, we first push off the
-                                                 four bits we read by shifting 1's retain the bit and 0's erase the
-                                                 bits, high byte is 8 bits. */
+  uint8_t highByte = (address >> 4) & 0xFF; // Extracts the right most 8 bits.
 
   if(!writeRegister(deviceAddr, 0x5B, lowNibble))
   {
@@ -115,7 +112,6 @@ bool setConfigAddress(uint8_t deviceAddr, uint16_t address)
   return true;
 
 }
-
 
 
 bool initializeBMI270(uint8_t deviceAddr)
@@ -593,9 +589,9 @@ float getGyroSensitivity(GyroRange range)
 {
   switch (range)
   {
-    case GyroRange::RANGE_125_DPS:: return 262.144f;
+    case GyroRange::RANGE_125_DPS: return 262.144f;
     case GyroRange::RANGE_250_DPS: return 131.072f;
-    case GyroRange::RANGE_500_DPS: return 65.536;
+    case GyroRange::RANGE_500_DPS: return 65.536f;
     case GyroRange::RANGE_1000_DPS: return 32.768f;
     case GyroRange::RANGE_2000_DPS: return 16.384f;
     default: return 0.0f;
@@ -603,7 +599,7 @@ float getGyroSensitivity(GyroRange range)
 }
 
 bool scaleAccelerometerData(
-  int16_t &scaledX, int16_t &scaledY, int16_t &scaledZ,
+  float &scaledX, float &scaledY, float &scaledZ,
   int16_t rawX, int16_t rawY, int16_t rawZ, AccelRANGE range
   )
 {
@@ -623,7 +619,7 @@ bool scaleAccelerometerData(
 
 
 bool scaleGyroscopeData(
-  int16_t &scaledX, int16_t &scaledY, int16_t &scaledZ,
+  float &scaledX, float &scaledY, float &scaledZ,
   int16_t rawX, int16_t rawY, int16_t rawZ, GyroRange range
   )
 {
